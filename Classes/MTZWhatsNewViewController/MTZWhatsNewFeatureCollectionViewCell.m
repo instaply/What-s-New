@@ -51,13 +51,15 @@
 - (void)commonInit
 {
 	self.backgroundColor = [UIColor clearColor];
-	
+
 	self.textLabel = [[UILabel alloc] init];
 	[self.contentView addSubview:self.textLabel];
 	self.textLabel.translatesAutoresizingMaskIntoConstraints = NO;
 	self.textLabel.textColor = [UIColor whiteColor];
 	self.textLabel.font = [UIFont fontWithName:@"HelveticaNeue-Regular" size:20.0f];
-	
+	self.textLabel.numberOfLines = 0;
+	self.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+
 	self.detailTextLabel = [[UILabel alloc] init];
 	[self.contentView addSubview:self.detailTextLabel];
 	self.detailTextLabel.translatesAutoresizingMaskIntoConstraints = NO;
@@ -70,7 +72,7 @@
 	[self.contentView addSubview:self.imageView];
 	self.imageView.contentMode = UIViewContentModeScaleAspectFit;
 	self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
-	
+
 	// Default of no style.
 	_layoutStyle = -1;
 }
@@ -79,7 +81,7 @@
 {
 	// Avoid reapplying layout, if not necessary..
 	if ( layoutStyle == _layoutStyle ) return;
-		
+
 	_layoutStyle = layoutStyle;
 	switch (_layoutStyle) {
 		case MTZWhatsNewFeatureCollectionViewCellLayoutStyleList:
@@ -94,39 +96,55 @@
 - (void)layoutForList
 {
 	[self removeAllConstraints];
-	
+
 	self.textLabel.textAlignment = NSTextAlignmentLeft;
 	self.detailTextLabel.textAlignment = NSTextAlignmentLeft;
-	
+
 	// Thew views to be referencing in visual format.
 	NSDictionary *views = @{@"icon": self.imageView, @"title": self.textLabel, @"detail": self.detailTextLabel};
-	
-	// Vertically center image view.
-	[self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
-	
+	NSDictionary *metrics = @{
+			@"textWidth":@194,
+			@"iconSize":@64,
+			@"textPadding":@26,
+			@"iconTextSpacing":@10,
+			@"titleDetailSpacing":@2,
+			@"minTitleHeight":@20,
+			@"minDetailHeight":@34
+	};
+
+	// Vertically align image view to the top in order to accomodate variable height title and detail labels.
+	[self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:10.0]];
+
 	// Horizontally space icon and labels.
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(26)-[icon(64)]-(10)-[title(>=194)]-(26)-|" options:NSLayoutFormatDirectionLeftToRight metrics:nil views:views]];
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(26)-[icon(64)]-(10)-[detail(>=194)]-(26)-|" options:NSLayoutFormatDirectionLeftToRight metrics:nil views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(textPadding)-[icon(iconSize)]-(iconTextSpacing)-[title(>=textWidth)]-(textPadding)-|" options:NSLayoutFormatDirectionLeftToRight metrics:metrics views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(textPadding)-[icon(iconSize)]-(iconTextSpacing)-[detail(>=textWidth)]-(textPadding)-|" options:NSLayoutFormatDirectionLeftToRight metrics:metrics views:views]];
 	// Vertically align labels.
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(>=0)-[title(20)]-(0)-[detail(>=34)]-(>=29)-|" options:0 metrics:nil views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(10)-[title(>=minTitleHeight)]-(titleDetailSpacing)-[detail(>=minDetailHeight)]-(>=0)-|" options:NSLayoutFormatDirectionMask metrics:metrics views:views]];
 }
 
 - (void)layoutForGrid
 {
 	[self removeAllConstraints];
-	
+
 	self.textLabel.textAlignment = NSTextAlignmentCenter;
 	self.detailTextLabel.textAlignment = NSTextAlignmentCenter;
-	
+
 	// Thew views to be referencing in visual format.
 	NSDictionary *views = @{@"icon": self.imageView, @"title": self.textLabel, @"detail": self.detailTextLabel};
-	
+	NSDictionary *metrics = @{
+			@"textWidth":@206,
+			@"iconSize":@64,
+			@"textPadding":@32,
+			@"minTitleHeight":@20,
+			@"minDetailHeight":@28
+	};
+
 	// Horizontal alignment.
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[icon(64)]-(>=0)-|" options:NSLayoutFormatAlignAllCenterX metrics:nil views:views]];
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(32)-[title(>=206)]-(32)-|" options:NSLayoutFormatAlignAllCenterX metrics:nil views:views]];
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(32)-[detail(>=206)]-(32)-|" options:NSLayoutFormatAlignAllCenterX metrics:nil views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(>=0)-[icon(iconSize)]-(>=0)-|" options:NSLayoutFormatAlignAllCenterX metrics:metrics views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(textPadding)-[title(>=textWidth)]-(textPadding)-|" options:NSLayoutFormatAlignAllCenterX metrics:metrics views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(textPadding)-[detail(>=textWidth)]-(textPadding)-|" options:NSLayoutFormatAlignAllCenterX metrics:metrics views:views]];
 	// Vertical alignment.
-	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(>=0)-[icon(64)]-10-[title(20)]-4-[detail(34)]-(>=28)-|" options:NSLayoutFormatAlignAllCenterX metrics:nil views:views]];
+	[self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(10)-[icon(iconSize)]-10-[title(>=minTitleHeight)]-4-[detail]-(>=minDetailHeight)-(>=0)-|" options:NSLayoutFormatAlignAllCenterX metrics:metrics views:views]];
 }
 
 - (void)prepareForReuse
@@ -181,7 +199,7 @@
 - (void)setContentColor:(UIColor *)contentColor
 {
 	_contentColor = contentColor;
-	
+
 	self.textLabel.textColor = _contentColor;
 	self.detailTextLabel.textColor = _contentColor;
 	self.imageView.tintColor = _contentColor;
